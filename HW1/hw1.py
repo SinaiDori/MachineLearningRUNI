@@ -20,12 +20,12 @@ def preprocess(X, y):
     - X: The mean normalized inputs.
     - y: The mean normalized labels.
     """
-    mean_X = np.mean(X)
-    mean_y = np.mean(y)
-    min_X = np.min(X)
-    min_y = np.min(y)
-    max_X = np.max(X)
-    max_y = np.max(y)
+    mean_X = np.mean(X, axis=0)
+    mean_y = np.mean(y, axis=0)
+    min_X = np.min(X, axis=0)
+    min_y = np.min(y, axis=0)
+    max_X = np.max(X, axis=0)
+    max_y = np.max(y, axis=0)
     # arrays that contains 5000 elements according to the variables above
     mean_X_array = np.full(X.shape, mean_X)
     mean_y_array = np.full(y.shape, mean_y)
@@ -99,13 +99,11 @@ def gradient_descent(X, y, theta, alpha, num_iters):
 
     theta = theta.copy()  # optional: theta outside the function will not change
     J_history = []  # Use a python list to save the cost value in every iteration
-    temp_theta = theta.copy()
+    m = X.shape[0]
+
     for i in range(num_iters):
-        h_theta_X = np.sum(theta * X, axis=1)
-        for j in range(X.shape[1]):
-            temp_theta[j] = theta[j] - alpha * (1 / X.shape[0]) * np.sum(
-                (h_theta_X - y) * X[:, j])
-        theta = temp_theta.copy()
+        h_theta_X = np.dot(X, theta)
+        theta = theta - alpha * (1 / m) * np.dot(X.T, (h_theta_X - y))
         J_history.append(compute_cost(X, y, theta))
 
     return theta, J_history
@@ -129,13 +127,9 @@ def compute_pinv(X, y):
     """
 
     pinv_theta = []
-    ###########################################################################
-    # TODO: Implement the pseudoinverse algorithm.                            #
-    ###########################################################################
-    pass
-    ###########################################################################
-    #                             END OF YOUR CODE                            #
-    ###########################################################################
+    transpose_X = np.transpose(X)
+    pinv_theta = np.dot(np.dot(np.linalg.inv(
+        np.dot(transpose_X, X)), transpose_X), y)
     return pinv_theta
 
 
@@ -160,13 +154,12 @@ def efficient_gradient_descent(X, y, theta, alpha, num_iters):
 
     theta = theta.copy()  # optional: theta outside the function will not change
     J_history = []  # Use a python list to save the cost value in every iteration
-    ###########################################################################
-    # TODO: Implement the efficient gradient descent optimization algorithm.  #
-    ###########################################################################
-    pass
-    ###########################################################################
-    #                             END OF YOUR CODE                            #
-    ###########################################################################
+    m = X.shape[0]
+    i = 0
+    while i < num_iters and (len(J_history) < 2 or J_history[-2] - J_history[-1] > 1e-8):
+        h_theta_X = np.dot(X, theta)
+        theta = theta - alpha * (1 / m) * np.dot(X.T, (h_theta_X - y))
+        J_history.append(compute_cost(X, y, theta))
     return theta, J_history
 
 
@@ -189,13 +182,13 @@ def find_best_alpha(X_train, y_train, X_val, y_val, iterations):
     alphas = [0.00001, 0.00003, 0.0001, 0.0003,
               0.001, 0.003, 0.01, 0.03, 0.1, 0.3, 1, 2, 3]
     alpha_dict = {}  # {alpha_value: validation_loss}
-    ###########################################################################
-    # TODO: Implement the function and find the best alpha value.             #
-    ###########################################################################
-    pass
-    ###########################################################################
-    #                             END OF YOUR CODE                            #
-    ###########################################################################
+    # theta = np.zeros(X_train.shape[1])
+    np.random.seed(42)
+    theta = np.random.rand(X_train.shape[1])
+    for alpha in alphas:
+        alpha_dict[alpha] = compute_cost(X_val, y_val, efficient_gradient_descent(
+            X_train, y_train, theta, alpha, iterations)[0])
+
     return alpha_dict
 
 
