@@ -70,7 +70,6 @@ def compute_cost(X, y, theta):
     """
 
     J = 0  # We use J for the cost.
-    # h_theta_X = theta[0] + theta[1] * X[:, 1]
     h_theta_X = np.sum(theta * X, axis=1)
     J = (1 / (2 * X.shape[0])) * np.sum(np.square(h_theta_X - y))
     return J
@@ -135,9 +134,9 @@ def compute_pinv(X, y):
 
 def efficient_gradient_descent(X, y, theta, alpha, num_iters):
     """
-    Learn the parameters of your model using the training set, but stop 
-    the learning process once the improvement of the loss value is smaller 
-    than 1e-8. This function is very similar to the gradient descent 
+    Learn the parameters of your model using the training set, but stop
+    the learning process once the improvement of the loss value is smaller
+    than 1e-8. This function is very similar to the gradient descent
     function you already implemented.
 
     Input:
@@ -156,20 +155,21 @@ def efficient_gradient_descent(X, y, theta, alpha, num_iters):
     J_history = []  # Use a python list to save the cost value in every iteration
     m = X.shape[0]
     i = 0
-    while i < num_iters and (len(J_history) < 2 or J_history[-2] - J_history[-1] > 1e-8):
+    while i < num_iters and (len(J_history) < 2 or J_history[-2] - J_history[-1] >= 1e-8):
         h_theta_X = np.dot(X, theta)
         theta = theta - alpha * (1 / m) * np.dot(X.T, (h_theta_X - y))
         J_history.append(compute_cost(X, y, theta))
+        i += 1
     return theta, J_history
 
 
 def find_best_alpha(X_train, y_train, X_val, y_val, iterations):
     """
-    Iterate over the provided values of alpha and train a model using 
-    the training dataset. maintain a python dictionary with alpha as the 
+    Iterate over the provided values of alpha and train a model using
+    the training dataset. maintain a python dictionary with alpha as the
     key and the loss on the validation set as the value.
 
-    You should use the efficient version of gradient descent for this part. 
+    You should use the efficient version of gradient descent for this part.
 
     Input:
     - X_train, y_train, X_val, y_val: the training and validation data
@@ -182,9 +182,14 @@ def find_best_alpha(X_train, y_train, X_val, y_val, iterations):
     alphas = [0.00001, 0.00003, 0.0001, 0.0003,
               0.001, 0.003, 0.01, 0.03, 0.1, 0.3, 1, 2, 3]
     alpha_dict = {}  # {alpha_value: validation_loss}
+
+    # option 1: theta is all zeros
     # theta = np.zeros(X_train.shape[1])
+
+    # option 2: theta is random according to the seed
     np.random.seed(42)
     theta = np.random.rand(X_train.shape[1])
+
     for alpha in alphas:
         alpha_dict[alpha] = compute_cost(X_val, y_val, efficient_gradient_descent(
             X_train, y_train, theta, alpha, iterations)[0])
