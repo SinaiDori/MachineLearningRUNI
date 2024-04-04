@@ -249,11 +249,12 @@ def create_square_features(df):
     """
 
     df_poly = df.copy()
-    ###########################################################################
-    # TODO: Implement the function to add polynomial features                 #
-    ###########################################################################
-    pass
-    ###########################################################################
-    #                             END OF YOUR CODE                            #
-    ###########################################################################
+    for i in range(df.shape[1]):
+        for j in range(i, df.shape[1]):
+            if i == j:
+                name = df.columns[i] + '^2'
+            else:
+                name = df.columns[i] + '*' + df.columns[j]
+            column = df.iloc[:, i] * df.iloc[:, j]
+            df_poly = pd.concat((df_poly, column.rename(name)), axis=1)
     return df_poly
