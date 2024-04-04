@@ -216,13 +216,23 @@ def forward_feature_selection(X_train, y_train, X_val, y_val, best_alpha, iterat
     - selected_features: A list of selected top 5 feature indices
     """
     selected_features = []
-    ##### c######################################################################
-    # TODO: Implement the function and find the best alpha value.             #
-    ###########################################################################
-    pass
-    ###########################################################################
-    #                             END OF YOUR CODE                            #
-    ###########################################################################
+    for i in range(5):
+        np.random.seed(42)
+        theta = np.random.rand(len(selected_features) + 2)
+        min_cost = float('inf')
+        best_feature = -1
+        for j in range(X_train.shape[1]):
+            if j not in selected_features:
+                temp_features = selected_features.copy()
+                temp_features.append(j)
+                temp_X_train = apply_bias_trick(X_train[:, temp_features])
+                temp_X_val = apply_bias_trick(X_val[:, temp_features])
+                cost = compute_cost(temp_X_val, y_val, efficient_gradient_descent(
+                    temp_X_train, y_train, theta, best_alpha, iterations)[0])
+                if cost < min_cost:
+                    min_cost = cost
+                    best_feature = j
+        selected_features.append(best_feature)
     return selected_features
 
 
