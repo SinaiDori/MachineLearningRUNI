@@ -20,13 +20,16 @@ def preprocess(X, y):
     - X: The mean normalized inputs.
     - y: The mean normalized labels.
     """
+
+    # calculate the mean, min, and max of X and y
     mean_X = np.mean(X, axis=0)
     mean_y = np.mean(y, axis=0)
     min_X = np.min(X, axis=0)
     min_y = np.min(y, axis=0)
     max_X = np.max(X, axis=0)
     max_y = np.max(y, axis=0)
-    # arrays that contains 5000 elements according to the variables above
+
+    # create arrays with the same shape as X and y
     mean_X_array = np.full(X.shape, mean_X)
     mean_y_array = np.full(y.shape, mean_y)
     min_X_array = np.full(X.shape, min_X)
@@ -34,6 +37,7 @@ def preprocess(X, y):
     max_X_array = np.full(X.shape, max_X)
     max_y_array = np.full(y.shape, max_y)
 
+    # mean normalization
     X = (X - mean_X_array) / (max_X_array - min_X_array)
     y = (y - mean_y_array) / (max_y_array - min_y_array)
     return X, y
@@ -50,8 +54,8 @@ def apply_bias_trick(X):
     - X: Input data with an additional column of ones in the
         zeroth position (m instances over n+1 features).
     """
-    temp = np.full(X.shape[0], 1)
-    X = np.column_stack((temp, X))
+    temp = np.full(X.shape[0], 1)  # create an array of ones
+    X = np.column_stack((temp, X))  # add the array of ones as the first column
     return X
 
 
@@ -69,7 +73,7 @@ def compute_cost(X, y, theta):
     - J: the cost associated with the current set of parameters (single number).
     """
 
-    J = 0  # We use J for the cost.
+    J = 0
     h_theta_X = np.sum(theta * X, axis=1)
     J = (1 / (2 * X.shape[0])) * np.sum(np.square(h_theta_X - y))
     return J
@@ -155,6 +159,8 @@ def efficient_gradient_descent(X, y, theta, alpha, num_iters):
     J_history = []  # Use a python list to save the cost value in every iteration
     m = X.shape[0]
     i = 0
+
+    # stop the learning process once the improvement of the loss value is smaller than 1e-8 or we hit the maximum number of iterations
     while i < num_iters and (len(J_history) < 2 or J_history[-2] - J_history[-1] >= 1e-8):
         h_theta_X = np.dot(X, theta)
         theta = theta - alpha * (1 / m) * np.dot(X.T, (h_theta_X - y))
@@ -183,10 +189,7 @@ def find_best_alpha(X_train, y_train, X_val, y_val, iterations):
               0.001, 0.003, 0.01, 0.03, 0.1, 0.3, 1, 2, 3]
     alpha_dict = {}  # {alpha_value: validation_loss}
 
-    # option 1: theta is all zeros
-    # theta = np.zeros(X_train.shape[1])
-
-    # option 2: theta is random according to the seed
+    # Theta is random according to the seed
     np.random.seed(42)
     theta = np.random.rand(X_train.shape[1])
 
@@ -219,8 +222,10 @@ def forward_feature_selection(X_train, y_train, X_val, y_val, best_alpha, iterat
     for i in range(5):
         np.random.seed(42)
         theta = np.random.rand(len(selected_features) + 2)
-        min_cost = float('inf')
+
+        min_cost = float('inf')  # initialize min_cost to infinity
         best_feature = -1
+
         for j in range(X_train.shape[1]):
             if j not in selected_features:
                 temp_features = selected_features.copy()
@@ -230,6 +235,7 @@ def forward_feature_selection(X_train, y_train, X_val, y_val, best_alpha, iterat
                 cost = compute_cost(temp_X_val, y_val, efficient_gradient_descent(
                     temp_X_train, y_train, theta, best_alpha, iterations)[0])
                 if cost < min_cost:
+                    # update the best feature and the minimum cost
                     min_cost = cost
                     best_feature = j
         selected_features.append(best_feature)
@@ -248,13 +254,16 @@ def create_square_features(df):
                with appropriate feature names
     """
 
-    df_poly = df.copy()
+    df_poly = df.copy()  # copy the input dataframe
     for i in range(df.shape[1]):
         for j in range(i, df.shape[1]):
             if i == j:
                 name = df.columns[i] + '^2'
             else:
                 name = df.columns[i] + '*' + df.columns[j]
+
+            # create the new multiplied column
             column = df.iloc[:, i] * df.iloc[:, j]
+            # add the new column to the dataframe
             df_poly = pd.concat((df_poly, column.rename(name)), axis=1)
     return df_poly
