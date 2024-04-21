@@ -2,85 +2,83 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 ### Chi square table values ###
-# The first key is the degree of freedom 
+# The first key is the degree of freedom
 # The second key is the p-value cut-off
 # The values are the chi-statistic that you need to use in the pruning
 
-chi_table = {1: {0.5 : 0.45,
-             0.25 : 1.32,
-             0.1 : 2.71,
-             0.05 : 3.84,
-             0.0001 : 100000},
-         2: {0.5 : 1.39,
-             0.25 : 2.77,
-             0.1 : 4.60,
-             0.05 : 5.99,
-             0.0001 : 100000},
-         3: {0.5 : 2.37,
-             0.25 : 4.11,
-             0.1 : 6.25,
-             0.05 : 7.82,
-             0.0001 : 100000},
-         4: {0.5 : 3.36,
-             0.25 : 5.38,
-             0.1 : 7.78,
-             0.05 : 9.49,
-             0.0001 : 100000},
-         5: {0.5 : 4.35,
-             0.25 : 6.63,
-             0.1 : 9.24,
-             0.05 : 11.07,
-             0.0001 : 100000},
-         6: {0.5 : 5.35,
-             0.25 : 7.84,
-             0.1 : 10.64,
-             0.05 : 12.59,
-             0.0001 : 100000},
-         7: {0.5 : 6.35,
-             0.25 : 9.04,
-             0.1 : 12.01,
-             0.05 : 14.07,
-             0.0001 : 100000},
-         8: {0.5 : 7.34,
-             0.25 : 10.22,
-             0.1 : 13.36,
-             0.05 : 15.51,
-             0.0001 : 100000},
-         9: {0.5 : 8.34,
-             0.25 : 11.39,
-             0.1 : 14.68,
-             0.05 : 16.92,
-             0.0001 : 100000},
-         10: {0.5 : 9.34,
-              0.25 : 12.55,
-              0.1 : 15.99,
-              0.05 : 18.31,
-              0.0001 : 100000},
-         11: {0.5 : 10.34,
-              0.25 : 13.7,
-              0.1 : 17.27,
-              0.05 : 19.68,
-              0.0001 : 100000}}
+chi_table = {1: {0.5: 0.45,
+             0.25: 1.32,
+             0.1: 2.71,
+             0.05: 3.84,
+             0.0001: 100000},
+             2: {0.5: 1.39,
+             0.25: 2.77,
+             0.1: 4.60,
+             0.05: 5.99,
+             0.0001: 100000},
+             3: {0.5: 2.37,
+             0.25: 4.11,
+             0.1: 6.25,
+             0.05: 7.82,
+             0.0001: 100000},
+             4: {0.5: 3.36,
+             0.25: 5.38,
+             0.1: 7.78,
+             0.05: 9.49,
+             0.0001: 100000},
+             5: {0.5: 4.35,
+             0.25: 6.63,
+             0.1: 9.24,
+             0.05: 11.07,
+             0.0001: 100000},
+             6: {0.5: 5.35,
+             0.25: 7.84,
+             0.1: 10.64,
+             0.05: 12.59,
+             0.0001: 100000},
+             7: {0.5: 6.35,
+             0.25: 9.04,
+             0.1: 12.01,
+             0.05: 14.07,
+             0.0001: 100000},
+             8: {0.5: 7.34,
+             0.25: 10.22,
+             0.1: 13.36,
+             0.05: 15.51,
+             0.0001: 100000},
+             9: {0.5: 8.34,
+             0.25: 11.39,
+             0.1: 14.68,
+             0.05: 16.92,
+             0.0001: 100000},
+             10: {0.5: 9.34,
+                  0.25: 12.55,
+                  0.1: 15.99,
+                  0.05: 18.31,
+                  0.0001: 100000},
+             11: {0.5: 10.34,
+                  0.25: 13.7,
+                  0.1: 17.27,
+                  0.05: 19.68,
+                  0.0001: 100000}}
+
 
 def calc_gini(data):
     """
     Calculate gini impurity measure of a dataset.
- 
+
     Input:
     - data: any dataset where the last column holds the labels.
- 
+
     Returns:
     - gini: The gini impurity value.
     """
     gini = 0.0
-    ###########################################################################
-    # TODO: Implement the function.                                           #
-    ###########################################################################
-    pass
-    ###########################################################################
-    #                             END OF YOUR CODE                            #
-    ###########################################################################
+    last_column = data[:, -1]
+    _, counts = np.unique(last_column, return_counts=True)
+    gini = 1 - np.sum((counts / len(last_column)) ** 2)
     return gini
+
 
 def calc_entropy(data):
     """
@@ -93,33 +91,30 @@ def calc_entropy(data):
     - entropy: The entropy value.
     """
     entropy = 0.0
-    ###########################################################################
-    # TODO: Implement the function.                                           #
-    ###########################################################################
-    pass
-    ###########################################################################
-    #                             END OF YOUR CODE                            #
-    ###########################################################################
+    last_column = data[:, -1]
+    _, counts = np.unique(last_column, return_counts=True)
+    probabilities = counts / len(last_column)
+    entropy = -np.sum(probabilities * np.log2(probabilities))
     return entropy
+
 
 class DecisionNode:
 
-    
-    def __init__(self, data, impurity_func, feature=-1,depth=0, chi=1, max_depth=1000, gain_ratio=False):
-        
-        self.data = data # the relevant data for the node
-        self.feature = feature # column index of criteria being tested
-        self.pred = self.calc_node_pred() # the prediction of the node
-        self.depth = depth # the current depth of the node
-        self.children = [] # array that holds this nodes children
+    def __init__(self, data, impurity_func, feature=-1, depth=0, chi=1, max_depth=1000, gain_ratio=False):
+
+        self.data = data  # the relevant data for the node
+        self.feature = feature  # column index of criteria being tested
+        self.pred = self.calc_node_pred()  # the prediction of the node
+        self.depth = depth  # the current depth of the node
+        self.children = []  # array that holds this nodes children
         self.children_values = []
-        self.terminal = False # determines if the node is a leaf
-        self.chi = chi 
-        self.max_depth = max_depth # the maximum allowed depth of the tree
+        self.terminal = False  # determines if the node is a leaf
+        self.chi = chi
+        self.max_depth = max_depth  # the maximum allowed depth of the tree
         self.impurity_func = impurity_func
         self.gain_ratio = gain_ratio
         self.feature_importance = 0
-    
+
     def calc_node_pred(self):
         """
         Calculate the node prediction.
@@ -136,7 +131,7 @@ class DecisionNode:
         #                             END OF YOUR CODE                            #
         ###########################################################################
         return pred
-        
+
     def add_child(self, node, val):
         """
         Adds a child node to self.children and updates self.children_values
@@ -150,11 +145,11 @@ class DecisionNode:
         ###########################################################################
         #                             END OF YOUR CODE                            #
         ###########################################################################
-        
+
     def calc_feature_importance(self, n_total_sample):
         """
         Calculate the selected feature importance.
-        
+
         Input:
         - n_total_sample: the number of samples in the dataset.
 
@@ -168,7 +163,7 @@ class DecisionNode:
         ###########################################################################
         #                             END OF YOUR CODE                            #
         ###########################################################################
-    
+
     def goodness_of_split(self, feature):
         """
         Calculate the goodness of split of a dataset given a feature and impurity function.
@@ -182,7 +177,7 @@ class DecisionNode:
                   according to the feature values.
         """
         goodness = 0
-        groups = {} # groups[feature_value] = data_subset
+        groups = {}  # groups[feature_value] = data_subset
         ###########################################################################
         # TODO: Implement the function.                                           #
         ###########################################################################
@@ -191,7 +186,7 @@ class DecisionNode:
         #                             END OF YOUR CODE                            #
         ###########################################################################
         return goodness, groups
-    
+
     def split(self):
         """
         Splits the current node according to the self.impurity_func. This function finds
@@ -208,16 +203,16 @@ class DecisionNode:
         #                             END OF YOUR CODE                            #
         ###########################################################################
 
-                    
+
 class DecisionTree:
     def __init__(self, data, impurity_func, feature=-1, chi=1, max_depth=1000, gain_ratio=False):
-        self.data = data # the relevant data for the tree
-        self.impurity_func = impurity_func # the impurity function to be used in the tree
-        self.chi = chi 
-        self.max_depth = max_depth # the maximum allowed depth of the tree
-        self.gain_ratio = gain_ratio #
-        self.root = None # the root node of the tree
-        
+        self.data = data  # the relevant data for the tree
+        self.impurity_func = impurity_func  # the impurity function to be used in the tree
+        self.chi = chi
+        self.max_depth = max_depth  # the maximum allowed depth of the tree
+        self.gain_ratio = gain_ratio
+        self.root = None  # the root node of the tree
+
     def build_tree(self):
         """
         Build a tree using the given impurity measure and training dataset. 
@@ -238,11 +233,11 @@ class DecisionTree:
     def predict(self, instance):
         """
         Predict a given instance
-     
+
         Input:
         - instance: an row vector from the dataset. Note that the last element 
                     of this vector is the label of the instance.
-     
+
         Output: the prediction of the instance.
         """
         pred = None
@@ -258,10 +253,10 @@ class DecisionTree:
     def calc_accuracy(self, dataset):
         """
         Predict a given dataset 
-     
+
         Input:
         - dataset: the dataset on which the accuracy is evaluated
-     
+
         Output: the accuracy of the decision tree on the given dataset (%).
         """
         accuracy = 0
@@ -273,9 +268,10 @@ class DecisionTree:
         #                             END OF YOUR CODE                            #
         ###########################################################################
         return accuracy
-        
+
     def depth(self):
         return self.root.depth()
+
 
 def depth_pruning(X_train, X_validation):
     """
@@ -287,11 +283,11 @@ def depth_pruning(X_train, X_validation):
     Input:
     - X_train: the training data where the last column holds the labels
     - X_validation: the validation data where the last column holds the labels
- 
+
     Output: the training and validation accuracies per max depth
     """
     training = []
-    validation  = []
+    validation = []
     root = None
     for max_depth in [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]:
         ###########################################################################
@@ -305,7 +301,6 @@ def depth_pruning(X_train, X_validation):
 
 
 def chi_pruning(X_train, X_test):
-
     """
     Calculate the training and validation accuracies for different chi values
     using the best impurity function and the gain_ratio flag you got
@@ -314,14 +309,14 @@ def chi_pruning(X_train, X_test):
     Input:
     - X_train: the training data where the last column holds the labels
     - X_validation: the validation data where the last column holds the labels
- 
+
     Output:
     - chi_training_acc: the training accuracy per chi value
     - chi_validation_acc: the validation accuracy per chi value
     - depth: the tree depth for each chi value
     """
     chi_training_acc = []
-    chi_validation_acc  = []
+    chi_validation_acc = []
     depth = []
 
     ###########################################################################
@@ -331,17 +326,17 @@ def chi_pruning(X_train, X_test):
     ###########################################################################
     #                             END OF YOUR CODE                            #
     ###########################################################################
-        
+
     return chi_training_acc, chi_testing_acc, depth
 
 
 def count_nodes(node):
     """
     Count the number of node in a given tree
- 
+
     Input:
     - node: a node in the decision tree.
- 
+
     Output: the number of node in the tree.
     """
     ###########################################################################
@@ -352,9 +347,3 @@ def count_nodes(node):
     #                             END OF YOUR CODE                            #
     ###########################################################################
     return n_nodes
-
-
-
-
-
-
