@@ -123,13 +123,9 @@ class DecisionNode:
         - pred: the prediction of the node
         """
         pred = None
-        ###########################################################################
-        # TODO: Implement the function.                                           #
-        ###########################################################################
-        pass
-        ###########################################################################
-        #                             END OF YOUR CODE                            #
-        ###########################################################################
+        last_column = self.data[:, -1]
+        classes, counts = np.unique(last_column, return_counts=True)
+        pred = classes[np.argmax(counts)]
         return pred
 
     def add_child(self, node, val):
@@ -138,13 +134,8 @@ class DecisionNode:
 
         This function has no return value
         """
-        ###########################################################################
-        # TODO: Implement the function.                                           #
-        ###########################################################################
-        pass
-        ###########################################################################
-        #                             END OF YOUR CODE                            #
-        ###########################################################################
+        self.children.append(node)
+        self.children_values.append(val)
 
     def calc_feature_importance(self, n_total_sample):
         """
@@ -156,13 +147,18 @@ class DecisionNode:
         This function has no return value - it stores the feature importance in 
         self.feature_importance
         """
-        ###########################################################################
-        # TODO: Implement the function.                                           #
-        ###########################################################################
-        pass
-        ###########################################################################
-        #                             END OF YOUR CODE                            #
-        ###########################################################################
+        self_size = len(self.data)
+        prob = self_size / n_total_sample
+        feature_column = self.data[:, self.feature]
+        feature_values, counts = np.unique(feature_column, return_counts=True)
+        feature_sum = 0
+        for key, value in feature_values:
+            data_subset = self.data[feature_column == value]
+            feature_sum += counts[key] / n_total_sample * \
+                self.impurity_func(data_subset)
+
+        self.feature_importance = prob * \
+            self.impurity_func(self.data) - feature_sum
 
     def goodness_of_split(self, feature):
         """
@@ -178,13 +174,32 @@ class DecisionNode:
         """
         goodness = 0
         groups = {}  # groups[feature_value] = data_subset
-        ###########################################################################
-        # TODO: Implement the function.                                           #
-        ###########################################################################
-        pass
-        ###########################################################################
-        #                             END OF YOUR CODE                            #
-        ###########################################################################
+        feature_column = self.data[:, feature]
+        feature_values = np.unique(feature_column)
+        groups_impurity = 0
+        split_info = 0
+
+        if self.gain_ratio:
+            impurity_func = calc_entropy
+        else:
+            impurity_func = self.impurity_func
+
+        data_impurity = impurity_func(self.data)
+
+        for value in feature_values:
+            groups[value] = self.data[feature_column == value]
+            group_prob = len(groups[value]) / len(self.data)
+            groups_impurity += group_prob * impurity_func(groups[value])
+            split_info -= group_prob * np.log2(group_prob)
+
+        if self.gain_ratio:
+            if split_info == 0:
+                return 0, groups
+
+            goodness = (data_impurity - groups_impurity) / split_info
+        else:
+            goodness = data_impurity - groups_impurity
+
         return goodness, groups
 
     def split(self):
