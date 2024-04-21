@@ -210,13 +210,34 @@ class DecisionNode:
 
         This function has no return value
         """
-        ###########################################################################
-        # TODO: Implement the function.                                           #
-        ###########################################################################
-        pass
-        ###########################################################################
-        #                             END OF YOUR CODE                            #
-        ###########################################################################
+        if self.depth >= self.max_depth:
+            self.terminal = True
+            return
+
+        if self.impurity_func(self.data) == 0:
+            self.terminal = True
+            return
+
+        best_feature = None
+        best_goodness = -float('inf')
+        best_groups = None
+
+        for feature in range(self.data.shape[1] - 1):
+            goodness, groups = self.goodness_of_split(feature)
+            if goodness > best_goodness:
+                best_goodness = goodness
+                best_feature = feature
+                best_groups = groups
+
+        self.feature = best_feature
+
+        for value, data_subset in best_groups.items():
+            child = DecisionNode(data_subset, self.impurity_func, feature=self.feature, depth=self.depth +
+                                 1, chi=self.chi, max_depth=self.max_depth, gain_ratio=self.gain_ratio)
+            self.add_child(child, value)
+
+        for child in self.children:
+            child.split()
 
 
 class DecisionTree:
@@ -342,7 +363,7 @@ def chi_pruning(X_train, X_test):
     #                             END OF YOUR CODE                            #
     ###########################################################################
 
-    return chi_training_acc, chi_testing_acc, depth
+    return chi_training_acc, chi_validation_acc, depth
 
 
 def count_nodes(node):
