@@ -6,61 +6,19 @@ import matplotlib.pyplot as plt
 # The second key is the p-value cut-off
 # The values are the chi-statistic that you need to use in the pruning
 
-chi_table = {1: {0.5: 0.45,
-             0.25: 1.32,
-             0.1: 2.71,
-             0.05: 3.84,
-             0.0001: 100000},
-             2: {0.5: 1.39,
-             0.25: 2.77,
-             0.1: 4.60,
-             0.05: 5.99,
-             0.0001: 100000},
-             3: {0.5: 2.37,
-             0.25: 4.11,
-             0.1: 6.25,
-             0.05: 7.82,
-             0.0001: 100000},
-             4: {0.5: 3.36,
-             0.25: 5.38,
-             0.1: 7.78,
-             0.05: 9.49,
-             0.0001: 100000},
-             5: {0.5: 4.35,
-             0.25: 6.63,
-             0.1: 9.24,
-             0.05: 11.07,
-             0.0001: 100000},
-             6: {0.5: 5.35,
-             0.25: 7.84,
-             0.1: 10.64,
-             0.05: 12.59,
-             0.0001: 100000},
-             7: {0.5: 6.35,
-             0.25: 9.04,
-             0.1: 12.01,
-             0.05: 14.07,
-             0.0001: 100000},
-             8: {0.5: 7.34,
-             0.25: 10.22,
-             0.1: 13.36,
-             0.05: 15.51,
-             0.0001: 100000},
-             9: {0.5: 8.34,
-             0.25: 11.39,
-             0.1: 14.68,
-             0.05: 16.92,
-             0.0001: 100000},
-             10: {0.5: 9.34,
-                  0.25: 12.55,
-                  0.1: 15.99,
-                  0.05: 18.31,
-                  0.0001: 100000},
-             11: {0.5: 10.34,
-                  0.25: 13.7,
-                  0.1: 17.27,
-                  0.05: 19.68,
-                  0.0001: 100000}}
+chi_table = {
+    1: {0.5: 0.45, 0.25: 1.32, 0.1: 2.71, 0.05: 3.84, 0.0001: 100000},
+    2: {0.5: 1.39, 0.25: 2.77, 0.1: 4.60, 0.05: 5.99, 0.0001: 100000},
+    3: {0.5: 2.37, 0.25: 4.11, 0.1: 6.25, 0.05: 7.82, 0.0001: 100000},
+    4: {0.5: 3.36, 0.25: 5.38, 0.1: 7.78, 0.05: 9.49, 0.0001: 100000},
+    5: {0.5: 4.35, 0.25: 6.63, 0.1: 9.24, 0.05: 11.07, 0.0001: 100000},
+    6: {0.5: 5.35, 0.25: 7.84, 0.1: 10.64, 0.05: 12.59, 0.0001: 100000},
+    7: {0.5: 6.35, 0.25: 9.04, 0.1: 12.01, 0.05: 14.07, 0.0001: 100000},
+    8: {0.5: 7.34, 0.25: 10.22, 0.1: 13.36, 0.05: 15.51, 0.0001: 100000},
+    9: {0.5: 8.34, 0.25: 11.39, 0.1: 14.68, 0.05: 16.92, 0.0001: 100000},
+    10: {0.5: 9.34, 0.25: 12.55, 0.1: 15.99, 0.05: 18.31, 0.0001: 100000},
+    11: {0.5: 10.34, 0.25: 13.7, 0.1: 17.27, 0.05: 19.68, 0.0001: 100000}
+}
 
 
 def calc_gini(data):
@@ -154,11 +112,9 @@ class DecisionNode:
         feature_sum = 0
         for key, value in feature_values:
             data_subset = self.data[feature_column == value]
-            feature_sum += counts[key] / n_total_sample * \
-                self.impurity_func(data_subset)
+            feature_sum += counts[key] / n_total_sample * self.impurity_func(data_subset)  # nopep8
 
-        self.feature_importance = prob * \
-            self.impurity_func(self.data) - feature_sum
+        self.feature_importance = prob * self.impurity_func(self.data) - feature_sum  # nopep8
 
     def goodness_of_split(self, feature):
         """
@@ -169,8 +125,7 @@ class DecisionNode:
 
         Returns:
         - goodness: the goodness of split
-        - groups: a dictionary holding the data after splitting 
-                  according to the feature values.
+        - groups: a dictionary holding the data after splitting according to the feature values.
         """
         goodness = 0
         groups = {}  # groups[feature_value] = data_subset
@@ -231,13 +186,36 @@ class DecisionNode:
 
         self.feature = best_feature
 
-        for value, data_subset in best_groups.items():
-            child = DecisionNode(data_subset, self.impurity_func, feature=self.feature, depth=self.depth +
-                                 1, chi=self.chi, max_depth=self.max_depth, gain_ratio=self.gain_ratio)
-            self.add_child(child, value)
+        # chi pruning
+        if check_chi(self) and len(self.data) > 1 and best_groups is not None and self.feature is not None:
+            for value, data_subset in best_groups.items():
+                child = DecisionNode(data_subset, self.impurity_func, feature=self.feature, depth=self.depth + 1, chi=self.chi, max_depth=self.max_depth, gain_ratio=self.gain_ratio)  # nopep8
+                self.add_child(child, value)
+                return
+        else:
+            self.terminal = True
+            return
 
-        for child in self.children:
-            child.split()
+
+def check_chi(node):
+    chi_squared_value = calc_chi(node)
+    # NEED TO VARIFY IF THIS CALCULATION IS CORRECT
+    degree_of_freedom = (len(chi_table) - 1) * (len(np.unique(node.data[:, -1])) - 1)  # nopep8
+    # NEED TO VARIFY IF THIS CONDITION IS CORRECT
+    return chi_squared_value > chi_table[degree_of_freedom][node.chi]
+
+
+def calc_chi(node):
+    chi_squared_value = 0
+    feature_values, feature_values_count = np.unique(node.data[:, node.feature], return_counts=True)  # nopep8
+    classes_values, classes_values_count = np.unique(node.data[:, -1], return_counts=True)  # nopep8
+    for feature_value in feature_values:
+        for class_value in classes_values:
+            expected = feature_values_count[feature_value] * classes_values_count[class_value] / len(node.data)  # nopep8
+            actual = len(node.data[(node.data[:, node.feature] == feature_value) & (node.data[:, -1] == class_value)])  # nopep8
+            chi_squared_value += (actual - expected) ** 2 / expected
+
+    return chi_squared_value
 
 
 class DecisionTree:
@@ -306,6 +284,8 @@ class DecisionTree:
         return accuracy
 
     def depth(self):
+        if self.root is None:
+            return 0
         return self.root.depth()
 
 
@@ -375,6 +355,7 @@ def count_nodes(node):
 
     Output: the number of node in the tree.
     """
+    n_nodes = 0
     ###########################################################################
     # TODO: Implement the function.                                           #
     ###########################################################################
