@@ -110,7 +110,7 @@ class DecisionNode:
         feature_column = self.data[:, self.feature]
         feature_values, counts = np.unique(feature_column, return_counts=True)
         feature_sum = 0
-        for key, value in feature_values:
+        for key, value in enumerate(feature_values):
             data_subset = self.data[feature_column == value]
             feature_sum += counts[key] / n_total_sample * self.impurity_func(data_subset)  # nopep8
 
@@ -165,11 +165,7 @@ class DecisionNode:
 
         This function has no return value
         """
-        if self.depth >= self.max_depth:
-            self.terminal = True
-            return
-
-        if self.impurity_func(self.data) == 0:
+        if self.depth >= self.max_depth or self.impurity_func(self.data) == 0:
             self.terminal = True
             return
 
@@ -187,33 +183,47 @@ class DecisionNode:
         self.feature = best_feature
 
         # chi pruning
-        if check_chi(self) and len(self.data) > 1 and best_groups is not None and self.feature is not None:
+        if check_chi(self, groups) and len(groups) > 1 and best_groups is not None and self.feature is not None:
             for value, data_subset in best_groups.items():
                 child = DecisionNode(data_subset, self.impurity_func, feature=self.feature, depth=self.depth + 1, chi=self.chi, max_depth=self.max_depth, gain_ratio=self.gain_ratio)  # nopep8
                 self.add_child(child, value)
-                return
+            return
         else:
             self.terminal = True
             return
 
 
-def check_chi(node):
-    chi_squared_value = calc_chi(node)
+def check_chi(node: DecisionNode, groups):
+
+    if node.chi == 1:
+        return True
+
+    chi_squared_value = calc_chi(node, groups)
     # NEED TO VARIFY IF THIS CALCULATION IS CORRECT
-    degree_of_freedom = (len(chi_table) - 1) * (len(np.unique(node.data[:, -1])) - 1)  # nopep8
+    degree_of_freedom = (len(groups) - 1) * (len(np.unique(node.data[:, -1])) - 1)  # nopep8
     # NEED TO VARIFY IF THIS CONDITION IS CORRECT
     return chi_squared_value > chi_table[degree_of_freedom][node.chi]
 
 
-def calc_chi(node):
+def calc_chi(node: DecisionNode, groups):
+    # chi_squared_value = 0
+    # feature_values, feature_values_count = np.unique(node.data[:, node.feature], return_counts=True)  # nopep8
+    # classes_values, classes_values_count = np.unique(node.data[:, -1], return_counts=True)  # nopep8
+    # for feature_value_index, feature_value in enumerate(feature_values):
+    #     for class_value_index, class_value in enumerate(classes_values):
+    #         expected = feature_values_count[feature_value_index] * classes_values_count[class_value_index] / len(node.data)  # nopep8
+    #         actual = len(node.data[(node.data[:, node.feature] == feature_value) & (node.data[:, -1] == class_value)])  # nopep8
+    #         chi_squared_value += (actual - expected) ** 2 / expected
+
+    # return chi_squared_value
     chi_squared_value = 0
-    feature_values, feature_values_count = np.unique(node.data[:, node.feature], return_counts=True)  # nopep8
-    classes_values, classes_values_count = np.unique(node.data[:, -1], return_counts=True)  # nopep8
-    for feature_value in feature_values:
-        for class_value in classes_values:
-            expected = feature_values_count[feature_value] * classes_values_count[class_value] / len(node.data)  # nopep8
-            actual = len(node.data[(node.data[:, node.feature] == feature_value) & (node.data[:, -1] == class_value)])  # nopep8
-            chi_squared_value += (actual - expected) ** 2 / expected
+    unique_classes_values, unique_classes_count = np.unique(node.data[:, -1], return_counts=True)  # nopep8
+    for value, data_subset in groups.items():
+        subset_classes_values, subset_classes_count = np.unique(data_subset[:, -1], return_counts=True)  # nopep8
+        for class_value_index, class_value in enumerate(unique_classes_values):
+            expected = len(data_subset) * (unique_classes_count[class_value_index] / len(node.data))  # nopep8
+            actual = subset_classes_count[subset_classes_values.tolist().index(class_value)]  # nopep8
+            chi_squared_value += ((actual - expected) ** 2) / expected
 
     return chi_squared_value
 
@@ -236,18 +246,19 @@ class DecisionTree:
         This function has no return value
         """
         self.root = DecisionNode(self.data, self.impurity_func, chi=self.chi, max_depth=self.max_depth, gain_ratio=self.gain_ratio)  # nopep8
-        self.build_tree_recursive(self.root)
+        self.build_tree_recursive(self.root, n_total_sample=len(self.data))
 
-    def build_tree_recursive(self, node):
+    def build_tree_recursive(self, node: DecisionNode, n_total_sample):
         node.split()
+        node.calc_feature_importance(n_total_sample)
 
         if node.terminal:
             return
 
         for child in node.children:
-            self.build_tree_recursive(child)
+            self.build_tree_recursive(child, n_total_sample)
 
-    def predict(self, instance):
+    def predict(self, instance: np.ndarray):
         """
         Predict a given instance
 
@@ -258,13 +269,24 @@ class DecisionTree:
         Output: the prediction of the instance.
         """
         pred = None
-        ###########################################################################
-        # TODO: Implement the function.                                           #
-        ###########################################################################
-        pass
-        ###########################################################################
-        #                             END OF YOUR CODE                            #
-        ###########################################################################
+        stop = True  # initial value for the while loop
+        node = self.root
+
+        if node is None:
+            return pred
+
+        if node.terminal:
+            return node.pred
+
+        while not node.terminal and stop:
+            stop = False
+            feature_value = instance[node.feature]
+            for i, child in enumerate(node.children):
+                if node.children_values[i] == feature_value:
+                    node = child
+                    stop = True
+                    break
+
         return node.pred
 
     def calc_accuracy(self, dataset):
@@ -277,19 +299,17 @@ class DecisionTree:
         Output: the accuracy of the decision tree on the given dataset (%).
         """
         accuracy = 0
-        ###########################################################################
-        # TODO: Implement the function.                                           #
-        ###########################################################################
-        pass
-        ###########################################################################
-        #                             END OF YOUR CODE                            #
-        ###########################################################################
+        correct = 0
+        for instance in dataset:
+            if self.predict(instance) == instance[-1]:
+                correct += 1
+        accuracy = (correct / len(dataset)) * 100
         return accuracy
 
     def depth(self):
         if self.root is None:
             return 0
-        return self.root.depth()
+        return self.root.depth
 
 
 def depth_pruning(X_train, X_validation):
