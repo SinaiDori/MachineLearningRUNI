@@ -235,14 +235,17 @@ class DecisionTree:
 
         This function has no return value
         """
-        self.root = None
-        ###########################################################################
-        # TODO: Implement the function.                                           #
-        ###########################################################################
-        pass
-        ###########################################################################
-        #                             END OF YOUR CODE                            #
-        ###########################################################################
+        self.root = DecisionNode(self.data, self.impurity_func, chi=self.chi, max_depth=self.max_depth, gain_ratio=self.gain_ratio)  # nopep8
+        self.build_tree_recursive(self.root)
+
+    def build_tree_recursive(self, node):
+        node.split()
+
+        if node.terminal:
+            return
+
+        for child in node.children:
+            self.build_tree_recursive(child)
 
     def predict(self, instance):
         """
