@@ -183,7 +183,7 @@ class DecisionNode:
         self.feature = best_feature
 
         # chi pruning
-        if check_chi(self, groups) and len(groups) > 1 and best_groups is not None and self.feature is not None:
+        if len(groups) > 1 and best_groups is not None and self.feature is not None and check_chi(self, groups):
             for value, data_subset in best_groups.items():
                 child = DecisionNode(data_subset, self.impurity_func, feature=self.feature, depth=self.depth + 1, chi=self.chi, max_depth=self.max_depth, gain_ratio=self.gain_ratio)  # nopep8
                 self.add_child(child, value)
@@ -222,7 +222,10 @@ def calc_chi(node: DecisionNode, groups):
         subset_classes_values, subset_classes_count = np.unique(data_subset[:, -1], return_counts=True)  # nopep8
         for class_value_index, class_value in enumerate(unique_classes_values):
             expected = len(data_subset) * (unique_classes_count[class_value_index] / len(node.data))  # nopep8
-            actual = subset_classes_count[subset_classes_values.tolist().index(class_value)]  # nopep8
+            if class_value not in subset_classes_values:
+                actual = 0
+            else:
+                actual = subset_classes_count[subset_classes_values.tolist().index(class_value)]  # nopep8
             chi_squared_value += ((actual - expected) ** 2) / expected
 
     return chi_squared_value
@@ -329,13 +332,10 @@ def depth_pruning(X_train, X_validation):
     validation = []
     root = None
     for max_depth in [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]:
-        ###########################################################################
-        # TODO: Implement the function.                                           #
-        ###########################################################################
-        pass
-        ###########################################################################
-        #                             END OF YOUR CODE                            #
-        ###########################################################################
+        root = DecisionTree(X_train, calc_entropy, max_depth=max_depth, gain_ratio=True)  # nopep8
+        root.build_tree()
+        training.append(root.calc_accuracy(X_train))
+        validation.append(root.calc_accuracy(X_validation))
     return training, validation
 
 
@@ -357,14 +357,13 @@ def chi_pruning(X_train, X_test):
     chi_training_acc = []
     chi_validation_acc = []
     depth = []
-
-    ###########################################################################
-    # TODO: Implement the function.                                           #
-    ###########################################################################
-    pass
-    ###########################################################################
-    #                             END OF YOUR CODE                            #
-    ###########################################################################
+    root = None
+    for chi in [1, 0.5, 0.25, 0.1, 0.05, 0.0001]:
+        root = DecisionTree(X_train, calc_entropy, chi=chi, gain_ratio=True)
+        root.build_tree()
+        chi_training_acc.append(root.calc_accuracy(X_train))
+        chi_validation_acc.append(root.calc_accuracy(X_test))
+        depth.append(root.depth())
 
     return chi_training_acc, chi_validation_acc, depth
 
@@ -378,12 +377,9 @@ def count_nodes(node):
 
     Output: the number of node in the tree.
     """
-    n_nodes = 0
-    ###########################################################################
-    # TODO: Implement the function.                                           #
-    ###########################################################################
-    pass
-    ###########################################################################
-    #                             END OF YOUR CODE                            #
-    ###########################################################################
+    n_nodes = 1
+    if node.children == []:
+        return 1
+    for child in node.children:
+        n_nodes += count_nodes(child)
     return n_nodes
