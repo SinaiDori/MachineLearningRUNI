@@ -105,6 +105,10 @@ class DecisionNode:
         This function has no return value - it stores the feature importance in 
         self.feature_importance
         """
+
+        if self.feature is None:
+            return
+
         self_size = len(self.data)
         prob = self_size / n_total_sample
         feature_column = self.data[:, self.feature]
@@ -127,6 +131,10 @@ class DecisionNode:
         - goodness: the goodness of split
         - groups: a dictionary holding the data after splitting according to the feature values.
         """
+
+        if feature is None:
+            return None, None
+
         goodness = 0
         groups = {}  # groups[feature_value] = data_subset
         feature_column = self.data[:, feature]
@@ -170,12 +178,12 @@ class DecisionNode:
             return
 
         best_feature = None
-        best_goodness = -float('inf')
+        best_goodness = 0
         best_groups = None
 
         for feature in range(self.data.shape[1] - 1):
             goodness, groups = self.goodness_of_split(feature)
-            if goodness > best_goodness:
+            if goodness is not None and goodness > best_goodness:
                 best_goodness = goodness
                 best_feature = feature
                 best_groups = groups
@@ -183,7 +191,7 @@ class DecisionNode:
         self.feature = best_feature
 
         # chi pruning
-        if len(groups) > 1 and best_groups is not None and self.feature is not None and check_chi(self, groups):
+        if best_groups is not None and self.feature is not None and len(best_groups) > 1 and check_chi(self, best_groups):
             for value, data_subset in best_groups.items():
                 child = DecisionNode(data_subset, self.impurity_func, feature=self.feature, depth=self.depth + 1, chi=self.chi, max_depth=self.max_depth, gain_ratio=self.gain_ratio)  # nopep8
                 self.add_child(child, value)
@@ -199,23 +207,11 @@ def check_chi(node: DecisionNode, groups):
         return True
 
     chi_squared_value = calc_chi(node, groups)
-    # NEED TO VARIFY IF THIS CALCULATION IS CORRECT
     degree_of_freedom = (len(groups) - 1) * (len(np.unique(node.data[:, -1])) - 1)  # nopep8
-    # NEED TO VARIFY IF THIS CONDITION IS CORRECT
     return chi_squared_value > chi_table[degree_of_freedom][node.chi]
 
 
 def calc_chi(node: DecisionNode, groups):
-    # chi_squared_value = 0
-    # feature_values, feature_values_count = np.unique(node.data[:, node.feature], return_counts=True)  # nopep8
-    # classes_values, classes_values_count = np.unique(node.data[:, -1], return_counts=True)  # nopep8
-    # for feature_value_index, feature_value in enumerate(feature_values):
-    #     for class_value_index, class_value in enumerate(classes_values):
-    #         expected = feature_values_count[feature_value_index] * classes_values_count[class_value_index] / len(node.data)  # nopep8
-    #         actual = len(node.data[(node.data[:, node.feature] == feature_value) & (node.data[:, -1] == class_value)])  # nopep8
-    #         chi_squared_value += (actual - expected) ** 2 / expected
-
-    # return chi_squared_value
     chi_squared_value = 0
     unique_classes_values, unique_classes_count = np.unique(node.data[:, -1], return_counts=True)  # nopep8
     for value, data_subset in groups.items():
@@ -252,11 +248,12 @@ class DecisionTree:
         self.build_tree_recursive(self.root, n_total_sample=len(self.data))
 
     def build_tree_recursive(self, node: DecisionNode, n_total_sample):
-        node.split()
-        node.calc_feature_importance(n_total_sample)
 
         if node.terminal:
             return
+
+        node.split()
+        node.calc_feature_importance(n_total_sample)
 
         for child in node.children:
             self.build_tree_recursive(child, n_total_sample)
@@ -294,7 +291,7 @@ class DecisionTree:
 
     def calc_accuracy(self, dataset):
         """
-        Predict a given dataset 
+        Predict a given dataset
 
         Input:
         - dataset: the dataset on which the accuracy is evaluated
@@ -357,13 +354,18 @@ def chi_pruning(X_train, X_test):
     chi_training_acc = []
     chi_validation_acc = []
     depth = []
-    root = None
     for chi in [1, 0.5, 0.25, 0.1, 0.05, 0.0001]:
-        root = DecisionTree(X_train, calc_entropy, chi=chi, gain_ratio=True)
-        root.build_tree()
-        chi_training_acc.append(root.calc_accuracy(X_train))
-        chi_validation_acc.append(root.calc_accuracy(X_test))
-        depth.append(root.depth())
+        tree = DecisionTree(X_train, calc_entropy, chi=chi, gain_ratio=True)
+        tree.build_tree()
+        chi_training_acc.append(tree.calc_accuracy(X_train))
+        chi_validation_acc.append(tree.calc_accuracy(X_test))
+
+        if tree.root is None:
+            depth.append(0)
+            continue
+
+        tree_depth = calc_tree_depth(tree.root)
+        depth.append(tree_depth)
 
     return chi_training_acc, chi_validation_acc, depth
 
@@ -383,3 +385,26 @@ def count_nodes(node):
     for child in node.children:
         n_nodes += count_nodes(child)
     return n_nodes
+
+
+def calc_tree_depth(node: DecisionNode):
+    """
+    Calculate the depth of the tree.
+
+    Input:
+    - node: a node of type DecisionNode which is the root of the tree.
+
+    Output: the depth of the tree.
+    """
+
+    depths = []
+
+    # If the node is terminal - return the depth of the node.
+    if node.terminal:
+        return node.depth
+
+    for node in node.children:
+        node_depth = calc_tree_depth(node)
+        depths.append(node_depth)
+
+    return max(depths)  # return the maximum depth of the children
