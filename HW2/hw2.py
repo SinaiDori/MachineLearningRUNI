@@ -308,7 +308,7 @@ class DecisionTree:
         for instance in dataset:
             if self.predict(instance) == instance[-1]:
                 correct += 1
-        accuracy = (correct / len(dataset)) * 100
+        accuracy = correct / len(dataset)
         return accuracy
 
     def depth(self):
@@ -322,7 +322,7 @@ def depth_pruning(X_train, X_validation):
     Calculate the training and validation accuracies for different depths
     using the best impurity function and the gain_ratio flag you got
     previously. On a single plot, draw the training and testing accuracy 
-    as a function of the max_depth. 
+    as a function of the max_depth.
 
     Input:
     - X_train: the training data where the last column holds the labels
