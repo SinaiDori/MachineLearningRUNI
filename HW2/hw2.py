@@ -1,3 +1,8 @@
+###### Your ID ######
+# ID1: 322462920
+# ID2: 207827825
+#####################
+
 import numpy as np
 import matplotlib.pyplot as plt
 
