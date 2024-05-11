@@ -254,13 +254,10 @@ def multi_normal_pdf(x, mean, cov):
     Returns the normal distribution pdf according to the given mean and var for the given x.    
     """
     pdf = None
-    ###########################################################################
-    # TODO: Implement the function.                                           #
-    ###########################################################################
-    pass
-    ###########################################################################
-    #                             END OF YOUR CODE                            #
-    ###########################################################################
+    first_part = (2 * np.pi) ** (-len(mean) / 2)
+    second_part = np.linalg.det(cov) ** -0.5
+    third_part = np.e ** (-0.5 * (x - mean).T @ np.linalg.inv(cov) @ (x - mean))  # nopep8
+    pdf = first_part * second_part * third_part
     return pdf
 
 
@@ -275,26 +272,18 @@ class MultiNormalClassDistribution():
         - dataset: The dataset as a numpy array
         - class_value : The class to calculate the parameters for.
         """
-        ###########################################################################
-        # TODO: Implement the function.                                           #
-        ###########################################################################
-        pass
-        ###########################################################################
-        #                             END OF YOUR CODE                            #
-        ###########################################################################
+        class_data = dataset[dataset[:, -1] == class_value][:, :-1]
+        self.mean = np.mean(class_data, axis=0)
+        self.cov = np.cov(class_data.T)
+        self.class_value = class_value
+        self.dataset = dataset
 
     def get_prior(self):
         """
         Returns the prior porbability of the class according to the dataset distribution.
         """
         prior = None
-        ###########################################################################
-        # TODO: Implement the function.                                           #
-        ###########################################################################
-        pass
-        ###########################################################################
-        #                             END OF YOUR CODE                            #
-        ###########################################################################
+        prior = len(self.dataset[self.dataset[:, -1] == self.class_value]) / len(self.dataset)  # nopep8
         return prior
 
     def get_instance_likelihood(self, x):
@@ -302,13 +291,7 @@ class MultiNormalClassDistribution():
         Returns the likelihood of the instance under the class according to the dataset distribution.
         """
         likelihood = None
-        ###########################################################################
-        # TODO: Implement the function.                                           #
-        ###########################################################################
-        pass
-        ###########################################################################
-        #                             END OF YOUR CODE                            #
-        ###########################################################################
+        likelihood = multi_normal_pdf(x[:-1], self.mean, self.cov)
         return likelihood
 
     def get_instance_posterior(self, x):
@@ -317,13 +300,9 @@ class MultiNormalClassDistribution():
         * Ignoring p(x)
         """
         posterior = None
-        ###########################################################################
-        # TODO: Implement the function.                                           #
-        ###########################################################################
-        pass
-        ###########################################################################
-        #                             END OF YOUR CODE                            #
-        ###########################################################################
+        likelihood = self.get_instance_likelihood(x)
+        prior = self.get_prior()
+        posterior = likelihood * prior
         return posterior
 
 
