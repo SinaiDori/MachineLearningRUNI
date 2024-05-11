@@ -83,13 +83,7 @@ def poisson_log_pmf(k, rate):
     return the log pmf value for instance k given the rate
     """
     log_p = None
-    ###########################################################################
-    # TODO: Implement the function.                                           #
-    ###########################################################################
-    pass
-    ###########################################################################
-    #                             END OF YOUR CODE                            #
-    ###########################################################################
+    log_p = np.log(((rate ** k) * (np.e ** (-rate))) / np.math.factorial(k))
     return log_p
 
 
@@ -101,13 +95,10 @@ def get_poisson_log_likelihoods(samples, rates):
     return: 1d numpy array, where each value represent that log-likelihood value of rates[i]
     """
     likelihoods = None
-    ###########################################################################
-    # TODO: Implement the function.                                           #
-    ###########################################################################
-    pass
-    ###########################################################################
-    #                             END OF YOUR CODE                            #
-    ###########################################################################
+
+    likelihoods = np.zeros(len(rates))
+    for i, rate in enumerate(rates):
+        likelihoods[i] = np.sum([poisson_log_pmf(sample, rate) for sample in samples])  # nopep8
     return likelihoods
 
 
@@ -120,13 +111,8 @@ def possion_iterative_mle(samples, rates):
     """
     rate = 0.0
     likelihoods = get_poisson_log_likelihoods(samples, rates)  # might help
-    ###########################################################################
-    # TODO: Implement the function.                                           #
-    ###########################################################################
-    pass
-    ###########################################################################
-    #                             END OF YOUR CODE                            #
-    ###########################################################################
+
+    rate = rates[np.argmax(likelihoods)]
     return rate
 
 
@@ -137,13 +123,7 @@ def possion_analytic_mle(samples):
     return: the rate that maximizes the likelihood
     """
     mean = None
-    ###########################################################################
-    # TODO: Implement the function.                                           #
-    ###########################################################################
-    pass
-    ###########################################################################
-    #                             END OF YOUR CODE                            #
-    ###########################################################################
+    mean = np.mean(samples)
     return mean
 
 
