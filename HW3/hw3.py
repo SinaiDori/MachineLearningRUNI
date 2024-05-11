@@ -139,13 +139,7 @@ def normal_pdf(x, mean, std):
     Returns the normal distribution pdf according to the given mean and std for the given x.    
     """
     p = None
-    ###########################################################################
-    # TODO: Implement the function.                                           #
-    ###########################################################################
-    pass
-    ###########################################################################
-    #                             END OF YOUR CODE                            #
-    ###########################################################################
+    p = (1 / (np.sqrt(2 * np.pi * (std ** 2)))) * np.e ** (-0.5 * ((x - mean) / std) ** 2)  # nopep8
     return p
 
 
@@ -159,26 +153,19 @@ class NaiveNormalClassDistribution():
         - dataset: The dataset as a 2d numpy array, assuming the class label is the last column
         - class_value : The class to calculate the parameters for.
         """
-        ###########################################################################
-        # TODO: Implement the function.                                           #
-        ###########################################################################
-        pass
-        ###########################################################################
-        #                             END OF YOUR CODE                            #
-        ###########################################################################
+
+        class_data = dataset[dataset[:, -1] == class_value][:, :-1]
+        self.mean = np.mean(class_data, axis=0)
+        self.std = np.std(class_data, axis=0)
+        self.class_value = class_value
+        self.dataset = dataset
 
     def get_prior(self):
         """
         Returns the prior porbability of the class according to the dataset distribution.
         """
         prior = None
-        ###########################################################################
-        # TODO: Implement the function.                                           #
-        ###########################################################################
-        pass
-        ###########################################################################
-        #                             END OF YOUR CODE                            #
-        ###########################################################################
+        prior = len(self.dataset[self.dataset[:, -1] == self.class_value]) / len(self.dataset)  # nopep8
         return prior
 
     def get_instance_likelihood(self, x):
@@ -186,13 +173,7 @@ class NaiveNormalClassDistribution():
         Returns the likelihhod porbability of the instance under the class according to the dataset distribution.
         """
         likelihood = None
-        ###########################################################################
-        # TODO: Implement the function.                                           #
-        ###########################################################################
-        pass
-        ###########################################################################
-        #                             END OF YOUR CODE                            #
-        ###########################################################################
+        likelihood = np.prod(normal_pdf(x[:-1], self.mean, self.std))
         return likelihood
 
     def get_instance_posterior(self, x):
@@ -201,13 +182,9 @@ class NaiveNormalClassDistribution():
         * Ignoring p(x)
         """
         posterior = None
-        ###########################################################################
-        # TODO: Implement the function.                                           #
-        ###########################################################################
-        pass
-        ###########################################################################
-        #                             END OF YOUR CODE                            #
-        ###########################################################################
+        likelihood = self.get_instance_likelihood(x)
+        prior = self.get_prior()
+        posterior = likelihood * prior
         return posterior
 
 
@@ -226,13 +203,8 @@ class MAPClassifier():
             - ccd1 : An object contating the relevant parameters and methods 
                      for the distribution of class 1.
         """
-        ###########################################################################
-        # TODO: Implement the function.                                           #
-        ###########################################################################
-        pass
-        ###########################################################################
-        #                             END OF YOUR CODE                            #
-        ###########################################################################
+        self.ccd0 = ccd0
+        self.ccd1 = ccd1
 
     def predict(self, x):
         """
@@ -244,13 +216,9 @@ class MAPClassifier():
             - 0 if the posterior probability of class 0 is higher and 1 otherwise.
         """
         pred = None
-        ###########################################################################
-        # TODO: Implement the function.                                           #
-        ###########################################################################
-        pass
-        ###########################################################################
-        #                             END OF YOUR CODE                            #
-        ###########################################################################
+        posterior0 = self.ccd0.get_instance_posterior(x)
+        posterior1 = self.ccd1.get_instance_posterior(x)
+        pred = 0 if posterior0 > posterior1 else 1
         return pred
 
 
@@ -266,13 +234,11 @@ def compute_accuracy(test_set, map_classifier):
         - Accuracy = #Correctly Classified / test_set size
     """
     acc = None
-    ###########################################################################
-    # TODO: Implement the function.                                           #
-    ###########################################################################
-    pass
-    ###########################################################################
-    #                             END OF YOUR CODE                            #
-    ###########################################################################
+    correct = 0
+    for instance in test_set:
+        if map_classifier.predict(instance) == instance[-1]:
+            correct += 1
+    acc = correct / len(test_set)
     return acc
 
 
