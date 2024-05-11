@@ -317,13 +317,9 @@ class MaxPrior():
             - ccd0 : An object contating the relevant parameters and methods for the distribution of class 0.
             - ccd1 : An object contating the relevant parameters and methods for the distribution of class 1.
         """
-        ###########################################################################
-        # TODO: Implement the function.                                           #
-        ###########################################################################
-        pass
-        ###########################################################################
-        #                             END OF YOUR CODE                            #
-        ###########################################################################
+
+        self.ccd0 = ccd0
+        self.ccd1 = ccd1
 
     def predict(self, x):
         """
@@ -335,13 +331,9 @@ class MaxPrior():
             - 0 if the posterior probability of class 0 is higher and 1 otherwise.
         """
         pred = None
-        ###########################################################################
-        # TODO: Implement the function.                                           #
-        ###########################################################################
-        pass
-        ###########################################################################
-        #                             END OF YOUR CODE                            #
-        ###########################################################################
+        prior0 = self.ccd0.get_prior()
+        prior1 = self.ccd1.get_prior()
+        pred = 0 if prior0 > prior1 else 1
         return pred
 
 
@@ -356,13 +348,9 @@ class MaxLikelihood():
             - ccd0 : An object contating the relevant parameters and methods for the distribution of class 0.
             - ccd1 : An object contating the relevant parameters and methods for the distribution of class 1.
         """
-        ###########################################################################
-        # TODO: Implement the function.                                           #
-        ###########################################################################
-        pass
-        ###########################################################################
-        #                             END OF YOUR CODE                            #
-        ###########################################################################
+
+        self.ccd0 = ccd0
+        self.ccd1 = ccd1
 
     def predict(self, x):
         """
@@ -374,13 +362,9 @@ class MaxLikelihood():
             - 0 if the posterior probability of class 0 is higher and 1 otherwise.
         """
         pred = None
-        ###########################################################################
-        # TODO: Implement the function.                                           #
-        ###########################################################################
-        pass
-        ###########################################################################
-        #                             END OF YOUR CODE                            #
-        ###########################################################################
+        likelihood0 = self.ccd0.get_instance_likelihood(x)
+        likelihood1 = self.ccd1.get_instance_likelihood(x)
+        pred = 0 if likelihood0 > likelihood1 else 1
         return pred
 
 
