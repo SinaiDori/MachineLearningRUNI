@@ -382,13 +382,10 @@ class DiscreteNBClassDistribution():
         - dataset: The dataset as a numpy array.
         - class_value: Compute the relevant parameters only for instances from the given class.
         """
-        ###########################################################################
-        # TODO: Implement the function.                                           #
-        ###########################################################################
-        pass
-        ###########################################################################
-        #                             END OF YOUR CODE                            #
-        ###########################################################################
+        self.dataset = dataset
+        self.class_value = class_value
+        self.class_data = dataset[dataset[:, -1] == class_value][:, :-1]
+        self.num_of_features = self.class_data.shape[1]
 
     def get_prior(self):
         """
@@ -396,13 +393,7 @@ class DiscreteNBClassDistribution():
         according to the dataset distribution.
         """
         prior = None
-        ###########################################################################
-        # TODO: Implement the function.                                           #
-        ###########################################################################
-        pass
-        ###########################################################################
-        #                             END OF YOUR CODE                            #
-        ###########################################################################
+        prior = len(self.dataset[self.dataset[:, -1] == self.class_value]) / len(self.dataset)  # nopep8
         return prior
 
     def get_instance_likelihood(self, x):
@@ -411,13 +402,15 @@ class DiscreteNBClassDistribution():
         the class according to the dataset distribution.
         """
         likelihood = None
-        ###########################################################################
-        # TODO: Implement the function.                                           #
-        ###########################################################################
-        pass
-        ###########################################################################
-        #                             END OF YOUR CODE                            #
-        ###########################################################################
+        likelihood = 1.0
+        n_i = len(self.class_data)
+        for i in range(self.num_of_features):
+            n_ij = len(self.class_data[self.class_data[:, i] == x[i]])
+            V_j = len(np.unique(self.class_data[:, i]))
+            if n_i + V_j == 0:
+                likelihood *= (n_ij + 1) / (n_i + V_j + EPSILLON)
+            else:
+                likelihood *= (n_ij + 1) / (n_i + V_j)
         return likelihood
 
     def get_instance_posterior(self, x):
@@ -427,13 +420,9 @@ class DiscreteNBClassDistribution():
         * Ignoring p(x)
         """
         posterior = None
-        ###########################################################################
-        # TODO: Implement the function.                                           #
-        ###########################################################################
-        pass
-        ###########################################################################
-        #                             END OF YOUR CODE                            #
-        ###########################################################################
+        likelihood = self.get_instance_likelihood(x)
+        prior = self.get_prior()
+        posterior = likelihood * prior
         return posterior
 
 
@@ -448,13 +437,8 @@ class MAPClassifier_DNB():
             - ccd0 : An object contating the relevant parameters and methods for the distribution of class 0.
             - ccd1 : An object contating the relevant parameters and methods for the distribution of class 1.
         """
-        ###########################################################################
-        # TODO: Implement the function.                                           #
-        ###########################################################################
-        pass
-        ###########################################################################
-        #                             END OF YOUR CODE                            #
-        ###########################################################################
+        self.ccd0 = ccd0
+        self.ccd1 = ccd1
 
     def predict(self, x):
         """
@@ -466,13 +450,9 @@ class MAPClassifier_DNB():
             - 0 if the posterior probability of class 0 is higher and 1 otherwise.
         """
         pred = None
-        ###########################################################################
-        # TODO: Implement the function.                                           #
-        ###########################################################################
-        pass
-        ###########################################################################
-        #                             END OF YOUR CODE                            #
-        ###########################################################################
+        posterior0 = self.ccd0.get_instance_posterior(x)
+        posterior1 = self.ccd1.get_instance_posterior(x)
+        pred = 0 if posterior0 > posterior1 else 1
         return pred
 
     def compute_accuracy(self, test_set):
@@ -485,11 +465,9 @@ class MAPClassifier_DNB():
             - Accuracy = #Correctly Classified / #test_set size
         """
         acc = None
-        ###########################################################################
-        # TODO: Implement the function.                                           #
-        ###########################################################################
-        pass
-        ###########################################################################
-        #                             END OF YOUR CODE                            #
-        ###########################################################################
+        correct = 0
+        for instance in test_set:
+            if self.predict(instance) == instance[-1]:
+                correct += 1
+        acc = correct / len(test_set)
         return acc
