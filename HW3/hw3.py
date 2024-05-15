@@ -6,71 +6,31 @@ class conditional_independence():
     def __init__(self):
 
         # You need to fill the None value with *valid* probabilities
-        # self.X = {0: 0.3, 1: 0.7}  # P(X=x)
-        # self.Y = {0: 0.3, 1: 0.7}  # P(Y=y)
-        # self.C = {0: 0.5, 1: 0.5}  # P(C=c)
+        self.X = {0: 0.3, 1: 0.7}  # P(X=x)
+        self.Y = {0: 0.3, 1: 0.7}  # P(Y=y)
+        self.C = {0: 0.5, 1: 0.5}  # P(C=c)
 
-        # self.X_Y = {
-        #     (0, 0): 0.2,
-        #     (0, 1): 0.1,
-        #     (1, 0): 0.1,
-        #     (1, 1): 0.6
-        # }  # P(X=x, Y=y)
-
-        # self.X_C = {
-        #     (0, 0): 0.2,
-        #     (0, 1): 0.1,
-        #     (1, 0): 0.3,
-        #     (1, 1): 0.4
-        # }  # P(X=x, C=y)
-
-        # self.Y_C = {
-        #     (0, 0): 0.2,
-        #     (0, 1): 0.3,
-        #     (1, 0): 0.3,
-        #     (1, 1): 0.2
-        # }  # P(Y=y, C=c)
-
-        # self.X_Y_C = {
-        #     (0, 0, 0): 0.1,
-        #     (0, 0, 1): 0.1,
-        #     (0, 1, 0): 0.1,
-        #     (0, 1, 1): 0.1,
-        #     (1, 0, 0): 0.1,
-        #     (1, 0, 1): 0.2,
-        #     (1, 1, 0): 0.1,
-        #     (1, 1, 1): 0.2,
-        # }  # P(X=x, Y=y, C=c)
-        # fill the None value with *valid* probabilities so that X and Y are dependent and X and Y are independent given C
-        self.X = {0: 0.5, 1: 0.5}  # Marginal probability of X
-        self.Y = {0: 0.5, 1: 0.5}  # Marginal probability of Y
-        self.C = {0: 0.5, 1: 0.5}  # Marginal probability of C
-
-        # X and Y are dependent
         self.X_Y = {
             (0, 0): 0.3,
             (0, 1): 0.2,
             (1, 0): 0.2,
             (1, 1): 0.3
-        }
+        }  # P(X=x, Y=y)
 
-        # X and C are independent
         self.X_C = {
             (0, 0): 0.25,
             (0, 1): 0.25,
             (1, 0): 0.25,
             (1, 1): 0.25
-        }
+        }  # P(X=x, C=y)
 
-        # Y and C are independent
         self.Y_C = {
             (0, 0): 0.25,
             (0, 1): 0.25,
             (1, 0): 0.25,
             (1, 1): 0.25
-        }
+        }  # P(Y=y, C=c)
 
-        # X and Y are independent given C
         self.X_Y_C = {
             (0, 0, 0): 0.125,
             (0, 0, 1): 0.125,
@@ -80,7 +40,7 @@ class conditional_independence():
             (1, 0, 1): 0.125,
             (1, 1, 0): 0.125,
             (1, 1, 1): 0.125
-        }
+        }  # P(X=x, Y=y, C=c)
 
     def is_X_Y_dependent(self):
         """
