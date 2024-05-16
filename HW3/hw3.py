@@ -1,3 +1,8 @@
+"""
+Omer Bengal - 207827825
+Sinay Dori - 233462920
+"""
+
 import numpy as np
 
 
