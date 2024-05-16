@@ -407,8 +407,8 @@ class DiscreteNBClassDistribution():
         for i in range(self.num_of_features):
             n_ij = len(self.class_data[self.class_data[:, i] == x[i]])
             V_j = len(np.unique(self.class_data[:, i]))
-            if n_i + V_j == 0:
-                likelihood *= (n_ij + 1) / (n_i + V_j + EPSILLON)
+            if n_ij == 0:
+                likelihood *= EPSILLON
             else:
                 likelihood *= (n_ij + 1) / (n_i + V_j)
         return likelihood
