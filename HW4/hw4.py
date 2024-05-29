@@ -211,12 +211,12 @@ def cross_validation(X, y, folds, algo, random_state):
 
     # shuffle the data
     idx = np.random.permutation(X.shape[0])
-    X = X[idx]
-    y = y[idx]
+    X_copy = X[idx]
+    y_copy = y[idx]
 
     # split the data to folds
-    X_folds = np.array_split(X, folds)
-    y_folds = np.array_split(y, folds)
+    X_folds = np.array_split(X_copy, folds)
+    y_folds = np.array_split(y_copy, folds)
 
     # loop over the folds
     accuracies = []
@@ -295,37 +295,44 @@ class EM(object):
         """
         Initialize distribution params
         """
-        ###########################################################################
-        # TODO: Implement the function.                                           #
-        ###########################################################################
-        pass
-        ###########################################################################
-        #                             END OF YOUR CODE                            #
-        ###########################################################################
+
+        # init weights
+        self.weights = np.ones(self.k) / self.k
+
+        indexes = np.random.choice(data.shape[0], self.k, replace=False)
+        # init mus
+        self.mus = data[indexes].reshape(self.k)
+
+        # init sigmas
+        self.sigmas = np.random.random_integers(self.k)
 
     def expectation(self, data):
         """
         E step - This function should calculate and update the responsibilities
         """
-        ###########################################################################
-        # TODO: Implement the function.                                           #
-        ###########################################################################
-        pass
-        ###########################################################################
-        #                             END OF YOUR CODE                            #
-        ###########################################################################
+
+        # calculate the res
+        res = self.weights * norm_pdf(data, self.mus, self.sigmas)
+
+        # calculate the sum
+        sum_res = np.sum(res, axis=1, keepdims=True)
+
+        # calculate the responsibilities
+        self.responsibilities = res / sum_res
 
     def maximization(self, data):
         """
         M step - This function should calculate and update the distribution params
         """
-        ###########################################################################
-        # TODO: Implement the function.                                           #
-        ###########################################################################
-        pass
-        ###########################################################################
-        #                             END OF YOUR CODE                            #
-        ###########################################################################
+
+        # calculate the new weights
+        self.weights = np.mean(self.responsibilities, axis=0)
+
+        # calculate the new mus
+        self.mus = np.sum(data * self.responsibilities, axis=0) / np.sum(self.responsibilities, axis=0)  # nopep8
+
+        # calculate the new sigmas
+        self.sigmas = np.sqrt(np.sum(self.responsibilities * (data - self.mus) ** 2, axis=0) / np.sum(self.responsibilities, axis=0))  # nopep8
 
     def fit(self, data):
         """
@@ -336,13 +343,33 @@ class EM(object):
         Stop the function when the difference between the previous cost and the current is less than eps
         or when you reach n_iter.
         """
-        ###########################################################################
-        # TODO: Implement the function.                                           #
-        ###########################################################################
-        pass
-        ###########################################################################
-        #                             END OF YOUR CODE                            #
-        ###########################################################################
+
+        self.init_params(data)
+
+        i = 0
+        J_prev = 0
+        self.costs = []
+
+        while i < self.n_iter:
+            self.expectation(data)
+            self.maximization(data)
+
+            J = self._cost_function(data)
+            self.costs.append(J)
+
+            if np.abs(J - J_prev) < self.eps:
+                break
+
+            J_prev = J
+            i += 1
+
+    def _cost_function(self, data):
+        """
+        Calculate the cost function for the EM algorithm
+        """
+        J = -np.sum(np.log(np.sum(self.weights * norm_pdf(data, self.mus, self.sigmas), axis=1)))  # nopep8
+
+        return J
 
     def get_dist_params(self):
         return self.weights, self.mus, self.sigmas
@@ -363,13 +390,7 @@ def gmm_pdf(data, weights, mus, sigmas):
     for the given data.    
     """
     pdf = None
-    ###########################################################################
-    # TODO: Implement the function.                                           #
-    ###########################################################################
-    pass
-    ###########################################################################
-    #                             END OF YOUR CODE                            #
-    ###########################################################################
+    pdf = np.sum(weights * norm_pdf(data, mus, sigmas), axis=1)
     return pdf
 
 
