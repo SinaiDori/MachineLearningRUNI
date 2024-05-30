@@ -173,7 +173,7 @@ class LogisticRegressionGD(object):
         # add bias to the data
         X = np.column_stack((np.ones(X.shape[0]), X))
         # calculate the probability
-        probs = self._sigmoid(X.dot(self.theta))
+        probs = self._sigmoid(X.dot(np.asarray(self.theta)))
         # classify the data
         preds = np.where(probs >= 0.5, 1, 0)
 
@@ -256,7 +256,7 @@ def norm_pdf(data, mu, sigma):
     """
 
     p = None
-    p = 1 / (sigma * np.sqrt(2 * np.pi)) * np.exp(-0.5 * ((data - mu) / sigma) ** 2)  # nopep8
+    p = 1 / (sigma * np.sqrt(2 * np.pi)) * np.exp(-0.5 * ((data.reshape(-1, 1) - mu) / sigma) ** 2)  # nopep8
     return p
 
 
@@ -291,11 +291,24 @@ class EM(object):
         self.costs = None
 
     # initial guesses for parameters
+    # def init_params(self, data):
+    #     """
+    #     Initialize distribution params
+    #     """
+
+    #     # init weights
+    #     self.weights = np.ones(self.k) / self.k
+
+    #     indexes = np.random.choice(data.shape[0], self.k, replace=False)
+    #     # init mus
+    #     self.mus = data[indexes].reshape(self.k)
+
+    #     # init sigmas
+    #     self.sigmas = np.random.random_integers(self.k)
     def init_params(self, data):
         """
         Initialize distribution params
         """
-
         # init weights
         self.weights = np.ones(self.k) / self.k
 
@@ -303,8 +316,8 @@ class EM(object):
         # init mus
         self.mus = data[indexes].reshape(self.k)
 
-        # init sigmas
-        self.sigmas = np.random.random_integers(self.k)
+        # init sigmas with small positive values
+        self.sigmas = np.random.uniform(low=0.1, high=2.0, size=self.k)
 
     def expectation(self, data):
         """
@@ -312,7 +325,7 @@ class EM(object):
         """
 
         # calculate the res
-        res = self.weights * norm_pdf(data, self.mus, self.sigmas)
+        res = self.weights * norm_pdf(data.reshape(-1, 1), self.mus, self.sigmas)  # nopep8
 
         # calculate the sum
         sum_res = np.sum(res, axis=1, keepdims=True)
@@ -326,13 +339,13 @@ class EM(object):
         """
 
         # calculate the new weights
-        self.weights = np.mean(self.responsibilities, axis=0)
+        self.weights = np.mean(np.asarray(self.responsibilities), axis=0)
 
         # calculate the new mus
-        self.mus = np.sum(data * self.responsibilities, axis=0) / np.sum(self.responsibilities, axis=0)  # nopep8
+        self.mus = np.sum(data.reshape(-1, 1) * self.responsibilities, axis=0) / np.sum(np.asarray(self.responsibilities), axis=0)  # nopep8
 
         # calculate the new sigmas
-        self.sigmas = np.sqrt(np.sum(self.responsibilities * (data - self.mus) ** 2, axis=0) / np.sum(self.responsibilities, axis=0))  # nopep8
+        self.sigmas = np.sqrt(np.sum(self.responsibilities * (data.reshape(-1, 1) - self.mus) ** 2, axis=0) / np.sum(np.asarray(self.responsibilities), axis=0))  # nopep8
 
     def fit(self, data):
         """
@@ -409,7 +422,8 @@ class NaiveBayesGaussian(object):
     def __init__(self, k=1, random_state=1991):
         self.k = k
         self.random_state = random_state
-        self.prior = None
+        self.prior = []
+        self.models = {}
 
     def fit(self, X, y):
         """
@@ -423,13 +437,44 @@ class NaiveBayesGaussian(object):
         y : array-like, shape = [n_examples]
           Target values.
         """
-        ###########################################################################
-        # TODO: Implement the function.                                           #
-        ###########################################################################
-        pass
-        ###########################################################################
-        #                             END OF YOUR CODE                            #
-        ###########################################################################
+
+        # get the unique classes
+        classes = np.unique(y)
+        self.prior = np.zeros(len(classes))
+        n_features = X.shape[1]
+
+        # loop over the classes, and then loop over the features, and train a model for each feature
+        for i, c in enumerate(classes):
+            # calculate the prior
+            self.prior[i] = np.sum(y == c) / len(y)
+            for j in range(n_features):
+                # get the data for the current class and feature
+                data = X[y == c, j]
+                # train the model
+                model = EM(k=self.k, random_state=self.random_state)
+                model.fit(data)
+                self.models[(c, j)] = model
+
+    def _calc_likelihood(self, data, c):
+        """
+        Calculate the likelihood of the data for a given class
+        """
+        likelihood = 1
+        n_features = data.shape[1]
+
+        for j in range(n_features):
+            model = self.models[(c, j)]
+            weights, mus, sigmas = model.get_dist_params()
+            likelihood *= gmm_pdf(data[:, j], weights, mus, sigmas)
+
+        return likelihood
+
+    def _calc_class_posterior(self, data, c):
+        """
+        Calculate the posterior of the data for a given class
+        """
+        posterior = self.prior[c] * self._calc_likelihood(data, c)
+        return posterior
 
     def predict(self, X):
         """
@@ -439,13 +484,16 @@ class NaiveBayesGaussian(object):
         X : {array-like}, shape = [n_examples, n_features]
         """
         preds = None
-        ###########################################################################
-        # TODO: Implement the function.                                           #
-        ###########################################################################
-        pass
-        ###########################################################################
-        #                             END OF YOUR CODE                            #
-        ###########################################################################
+
+        n_classes = len(self.prior)
+        n_examples = X.shape[0]
+        posteriors = np.zeros((n_classes, n_examples))
+
+        for i in range(n_classes):
+            posteriors[i] = self._calc_class_posterior(X, i)
+
+        preds = np.argmax(posteriors, axis=0)
+
         return preds
 
 
