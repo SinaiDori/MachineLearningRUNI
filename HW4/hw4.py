@@ -158,7 +158,8 @@ class LogisticRegressionGD(object):
     def _get_gradient(self, X, y):
         m = X.shape[0]
         h = self._sigmoid(X.dot(self.theta))
-        grad = 1/m * X.T.dot(h-y)
+        # grad = 1/m * X.T.dot(h-y)
+        grad = X.T.dot(h-y)
 
         return grad
 
@@ -527,13 +528,22 @@ def model_evaluation(x_train, y_train, x_test, y_test, k, best_eta, best_eps):
     bayes_train_acc = None
     bayes_test_acc = None
 
-    ###########################################################################
-    # TODO: Implement the function.                                           #
-    ###########################################################################
-    pass
-    ###########################################################################
-    #                             END OF YOUR CODE                            #
-    ###########################################################################
+    # 1. Logistic Regression
+    lr = LogisticRegressionGD(eta=best_eta, eps=best_eps)
+    lr.fit(x_train, y_train)
+    preds = lr.predict(x_train)
+    lor_train_acc = np.mean(preds == y_train)
+    preds = lr.predict(x_test)
+    lor_test_acc = np.mean(preds == y_test)
+
+    # 2. Naive Bayes
+    nb = NaiveBayesGaussian(k=k)
+    nb.fit(x_train, y_train)
+    preds = nb.predict(x_train)
+    bayes_train_acc = np.mean(preds == y_train)
+    preds = nb.predict(x_test)
+    bayes_test_acc = np.mean(preds == y_test)
+
     return {'lor_train_acc': lor_train_acc,
             'lor_test_acc': lor_test_acc,
             'bayes_train_acc': bayes_train_acc,
@@ -551,13 +561,47 @@ def generate_datasets():
     dataset_a_labels = None
     dataset_b_features = None
     dataset_b_labels = None
-    ###########################################################################
-    # TODO: Implement the function.                                           #
-    ###########################################################################
-    pass
-    ###########################################################################
-    #                             END OF YOUR CODE                            #
-    ###########################################################################
+
+    """
+    1. Generate a dataset (`dataset_a`), in 3 dimensions (3 features), with 2 classes, using **only** Multivariate-Gaussians (as many as you want) such that **Naive Bayes will work better on it when compared to Logisitc Regression**.
+    2. Generate another dataset (`dataset_b`), in 3 dimensions (3 features), with 2 classes, using **only** Multivariate-Gaussians (as many as you want) such that **Logistic Regression will work better on it when compared to Naive Bayes**.
+    3. Visualize the datasets: Plot one 3d graph.
+
+    Make sure to use the "multivariate_normal" function from scipy.stats.
+    """
+
+    # dataset a
+    np.random.seed(1991)
+    mu1 = np.array([0, 0, 0])
+    cov1 = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
+    mu2 = np.array([1, 1, 1])
+    cov2 = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
+
+    dataset_a_features = np.concatenate([multivariate_normal.rvs(mean=mu1, cov=cov1, size=100), multivariate_normal.rvs(mean=mu2, cov=cov2, size=100)])  # nopep8
+    dataset_a_labels = np.concatenate([np.zeros(100), np.ones(100)])
+
+    # dataset b
+    mu1 = np.array([0, 0, 0])
+    cov1 = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
+    mu2 = np.array([1, 1, 1])
+    cov2 = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
+
+    dataset_b_features = np.concatenate([multivariate_normal.rvs(mean=mu1, cov=cov1, size=100), multivariate_normal.rvs(mean=mu2, cov=cov2, size=100)])  # nopep8
+    dataset_b_labels = np.concatenate([np.zeros(100), np.ones(100)])
+
+    import matplotlib.pyplot as plt
+
+    # plot the data, colors: 0 - blue, 1 - red
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+    ax.scatter(dataset_a_features[dataset_a_labels == 0, 0], dataset_a_features[dataset_a_labels == 0, 1], dataset_a_features[dataset_a_labels == 0, 2], c='b', label='0')  # nopep8
+    ax.scatter(dataset_a_features[dataset_a_labels == 1, 0], dataset_a_features[dataset_a_labels == 1, 1], dataset_a_features[dataset_a_labels == 1, 2], c='r', label='1')  # nopep8
+    ax.set_xlabel('X Label')
+    ax.set_ylabel('Y Label')
+    ax.set_zlabel('Z Label')
+    ax.legend()
+    plt.show()
+
     return {'dataset_a_features': dataset_a_features,
             'dataset_a_labels': dataset_a_labels,
             'dataset_b_features': dataset_b_features,
