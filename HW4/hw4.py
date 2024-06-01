@@ -1,5 +1,37 @@
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
+from matplotlib.colors import ListedColormap
+
+
+# Function for ploting the decision boundaries of a model
+def plot_decision_regions(X, y, classifier, resolution=0.01, title=""):
+
+    # setup marker generator and color map
+    markers = ('.', '.')
+    colors = ('blue', 'red')
+    cmap = ListedColormap(colors[:len(np.unique(y))])
+    # plot the decision surface
+    x1_min, x1_max = X[:, 0].min() - 1, X[:, 0].max() + 1
+    x2_min, x2_max = X[:, 1].min() - 1, X[:, 1].max() + 1
+    xx1, xx2 = np.meshgrid(np.arange(x1_min, x1_max, resolution),
+                           np.arange(x2_min, x2_max, resolution))
+    Z = classifier.predict(np.array([xx1.ravel(), xx2.ravel()]).T)
+    Z = Z.reshape(xx1.shape)
+    plt.contourf(xx1, xx2, Z, alpha=0.3, cmap=cmap)
+    plt.xlim(xx1.min(), xx1.max())
+    plt.ylim(xx2.min(), xx2.max())
+
+    for idx, cl in enumerate(np.unique(y)):
+        plt.title(title)
+        plt.scatter(x=X[y == cl, 0],
+                    y=X[y == cl, 1],
+                    alpha=0.8,
+                    c=colors[idx],
+                    marker=markers[idx],
+                    label=cl,
+                    edgecolor='black')
+    plt.show()
 
 
 def pearson_correlation(x, y):
@@ -313,12 +345,17 @@ class EM(object):
         # init weights
         self.weights = np.ones(self.k) / self.k
 
-        indexes = np.random.choice(data.shape[0], self.k, replace=False)
-        # init mus
-        self.mus = data[indexes].reshape(self.k)
+        # indexes = np.random.choice(data.shape[0], self.k, replace=False)
+        # # init mus
+        # self.mus = data[indexes].reshape(self.k)
+
+        # init mus with random values between the min and max of the data
+        self.mus = np.random.uniform(low=np.min(
+            data), high=np.max(data), size=self.k)
 
         # init sigmas with small positive values
-        self.sigmas = np.random.uniform(low=0.1, high=2.0, size=self.k)
+        # self.sigmas = np.random.uniform(low=0.1, high=2.0, size=self.k)
+        self.sigmas = np.ones(self.k)
 
     def expectation(self, data):
         """
@@ -536,13 +573,17 @@ def model_evaluation(x_train, y_train, x_test, y_test, k, best_eta, best_eps):
     preds = lr.predict(x_test)
     lor_test_acc = np.mean(preds == y_test)
 
+    plot_decision_regions(x_train, y_train, lr, title="Logistic Regression")
+
     # 2. Naive Bayes
     nb = NaiveBayesGaussian(k=k)
     nb.fit(x_train, y_train)
     preds = nb.predict(x_train)
-    bayes_train_acc = np.mean(preds == y_train)
+    bayes_train_acc = np.mean(preds == y_train.reshape(-1, 1))
     preds = nb.predict(x_test)
-    bayes_test_acc = np.mean(preds == y_test)
+    bayes_test_acc = np.mean(preds == y_test.reshape(-1, 1))
+
+    plot_decision_regions(x_train, y_train, nb, title="Naive Bayes")
 
     return {'lor_train_acc': lor_train_acc,
             'lor_test_acc': lor_test_acc,
