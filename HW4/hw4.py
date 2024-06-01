@@ -495,7 +495,7 @@ class NaiveBayesGaussian(object):
 
         preds = np.argmax(posteriors, axis=0)
 
-        return preds
+        return preds.reshape(-1, 1)
 
 
 def model_evaluation(x_train, y_train, x_test, y_test, k, best_eta, best_eps):
@@ -573,10 +573,12 @@ def generate_datasets():
         return features, labels
 
     # Dataset for Naive Bayes
-    means1 = [[3, 3, 3], [21, 21, 21]]
+    means1 = [[3, 3, 3], [9, 9, 9], [15, 15, 15], [21, 21, 21]]
     covariances1 = [[[2, 0, 0], [0, 2, 0], [0, 0, 2]],
+                    [[2, 0, 0], [0, 2, 0], [0, 0, 2]],
+                    [[2, 0, 0], [0, 2, 0], [0, 0, 2]],
                     [[2, 0, 0], [0, 2, 0], [0, 0, 2]]]
-    labels1 = [0, 1]
+    labels1 = [0, 1, 1, 0]
 
     data1_features, data1_labels = generate_samples(
         4000, means1, covariances1, labels1)
