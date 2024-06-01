@@ -159,7 +159,7 @@ class LogisticRegressionGD(object):
         m = X.shape[0]
         h = self._sigmoid(X.dot(self.theta))
         # grad = 1/m * X.T.dot(h-y)
-        grad = X.T.dot(h-y)
+        grad = 1/m * X.T.dot(h-y)
 
         return grad
 
@@ -551,59 +551,48 @@ def model_evaluation(x_train, y_train, x_test, y_test, k, best_eta, best_eps):
 
 
 def generate_datasets():
-    from scipy.stats import multivariate_normal
-    '''
-    This function should have no input.
-    It should generate the two dataset as described in the jupyter notebook,
-    and return them according to the provided return dict.
-    '''
-    dataset_a_features = None
-    dataset_a_labels = None
-    dataset_b_features = None
-    dataset_b_labels = None
+    np.random.seed(2024)
+    data1_features = None
+    data1_labels = None
+    data2_features = None
+    data2_labels = None
 
-    """
-    1. Generate a dataset (`dataset_a`), in 3 dimensions (3 features), with 2 classes, using **only** Multivariate-Gaussians (as many as you want) such that **Naive Bayes will work better on it when compared to Logisitc Regression**.
-    2. Generate another dataset (`dataset_b`), in 3 dimensions (3 features), with 2 classes, using **only** Multivariate-Gaussians (as many as you want) such that **Logistic Regression will work better on it when compared to Naive Bayes**.
-    3. Visualize the datasets: Plot one 3d graph.
+    def generate_samples(num_samples, means_list, cov_list, class_labels):
+        features = np.empty((num_samples, 3))
+        labels = np.empty((num_samples))
+        samples_per_gaussian = num_samples // len(means_list)
 
-    Make sure to use the "multivariate_normal" function from scipy.stats.
-    """
+        for i, mean in enumerate(means_list):
+            label = class_labels[i]
+            samples = np.random.multivariate_normal(
+                mean, cov_list[i], samples_per_gaussian)
+            features[i * samples_per_gaussian: (i + 1)
+                     * samples_per_gaussian] = samples
+            labels[i * samples_per_gaussian: (i + 1) * samples_per_gaussian] = np.full(
+                samples_per_gaussian, label)
+        return features, labels
 
-    # dataset a
-    np.random.seed(1991)
-    mu1 = np.array([0, 0, 0])
-    cov1 = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
-    mu2 = np.array([1, 1, 1])
-    cov2 = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
+    # Dataset for Naive Bayes
+    means1 = [[3, 3, 3], [21, 21, 21]]
+    covariances1 = [[[2, 0, 0], [0, 2, 0], [0, 0, 2]],
+                    [[2, 0, 0], [0, 2, 0], [0, 0, 2]]]
+    labels1 = [0, 1]
 
-    dataset_a_features = np.concatenate([multivariate_normal.rvs(mean=mu1, cov=cov1, size=100), multivariate_normal.rvs(mean=mu2, cov=cov2, size=100)])  # nopep8
-    dataset_a_labels = np.concatenate([np.zeros(100), np.ones(100)])
+    data1_features, data1_labels = generate_samples(
+        4000, means1, covariances1, labels1)
 
-    # dataset b
-    mu1 = np.array([0, 0, 0])
-    cov1 = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
-    mu2 = np.array([1, 1, 1])
-    cov2 = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
+    # Dataset for Logistic Regression
+    means2 = [[0, 1, 0], [0, 8, 0]]
+    covariances2 = [[[4, 4, 4], [4, 4, 4], [4, 4, 4]],
+                    [[4, 4, 4], [4, 4, 4], [4, 4, 4]]]
+    labels2 = [0, 1]
 
-    dataset_b_features = np.concatenate([multivariate_normal.rvs(mean=mu1, cov=cov1, size=100), multivariate_normal.rvs(mean=mu2, cov=cov2, size=100)])  # nopep8
-    dataset_b_labels = np.concatenate([np.zeros(100), np.ones(100)])
+    data2_features, data2_labels = generate_samples(
+        4000, means2, covariances2, labels2)
 
-    import matplotlib.pyplot as plt
-
-    # plot the data, colors: 0 - blue, 1 - red
-    fig = plt.figure()
-    ax = fig.add_subplot(111, projection='3d')
-    ax.scatter(dataset_a_features[dataset_a_labels == 0, 0], dataset_a_features[dataset_a_labels == 0, 1], dataset_a_features[dataset_a_labels == 0, 2], c='b', label='0')  # nopep8
-    ax.scatter(dataset_a_features[dataset_a_labels == 1, 0], dataset_a_features[dataset_a_labels == 1, 1], dataset_a_features[dataset_a_labels == 1, 2], c='r', label='1')  # nopep8
-    ax.set_xlabel('X Label')
-    ax.set_ylabel('Y Label')
-    ax.set_zlabel('Z Label')
-    ax.legend()
-    plt.show()
-
-    return {'dataset_a_features': dataset_a_features,
-            'dataset_a_labels': dataset_a_labels,
-            'dataset_b_features': dataset_b_features,
-            'dataset_b_labels': dataset_b_labels
-            }
+    return {
+        'data1_features': data1_features,
+        'data1_labels': data1_labels,
+        'data2_features': data2_features,
+        'data2_labels': data2_labels
+    }
