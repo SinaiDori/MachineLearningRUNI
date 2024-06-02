@@ -14,8 +14,7 @@ def plot_decision_regions(X, y, classifier, resolution=0.01, title=""):
     # plot the decision surface
     x1_min, x1_max = X[:, 0].min() - 1, X[:, 0].max() + 1
     x2_min, x2_max = X[:, 1].min() - 1, X[:, 1].max() + 1
-    xx1, xx2 = np.meshgrid(np.arange(x1_min, x1_max, resolution),
-                           np.arange(x2_min, x2_max, resolution))
+    xx1, xx2 = np.meshgrid(np.arange(x1_min, x1_max, resolution), np.arange(x2_min, x2_max, resolution))  # nopep8
     Z = classifier.predict(np.array([xx1.ravel(), xx2.ravel()]).T)
     Z = Z.reshape(xx1.shape)
     plt.contourf(xx1, xx2, Z, alpha=0.3, cmap=cmap)
@@ -86,7 +85,6 @@ def feature_selection(X, y, n_features=5):
     # remove unnumeric columns
     X = X.select_dtypes(include=[np.number])
 
-    # calculate the correlation between each feature and the target and sort the features by the correlation in absolote value
     correlations = X.apply(lambda x: pearson_correlation(x, y))
     correlations = correlations.abs().sort_values(ascending=False)
 
@@ -190,7 +188,6 @@ class LogisticRegressionGD(object):
     def _get_gradient(self, X, y):
         m = X.shape[0]
         h = self._sigmoid(X.dot(self.theta))
-        # grad = 1/m * X.T.dot(h-y)
         grad = 1/m * X.T.dot(h-y)
 
         return grad
@@ -323,21 +320,6 @@ class EM(object):
         self.sigmas = None
         self.costs = None
 
-    # initial guesses for parameters
-    # def init_params(self, data):
-    #     """
-    #     Initialize distribution params
-    #     """
-
-    #     # init weights
-    #     self.weights = np.ones(self.k) / self.k
-
-    #     indexes = np.random.choice(data.shape[0], self.k, replace=False)
-    #     # init mus
-    #     self.mus = data[indexes].reshape(self.k)
-
-    #     # init sigmas
-    #     self.sigmas = np.random.random_integers(self.k)
     def init_params(self, data):
         """
         Initialize distribution params
@@ -345,16 +327,11 @@ class EM(object):
         # init weights
         self.weights = np.ones(self.k) / self.k
 
-        # indexes = np.random.choice(data.shape[0], self.k, replace=False)
-        # # init mus
-        # self.mus = data[indexes].reshape(self.k)
-
         # init mus with random values between the min and max of the data
         self.mus = np.random.uniform(low=np.min(
             data), high=np.max(data), size=self.k)
 
-        # init sigmas with small positive values
-        # self.sigmas = np.random.uniform(low=0.1, high=2.0, size=self.k)
+        # init sigmas
         self.sigmas = np.ones(self.k)
 
     def expectation(self, data):
@@ -584,6 +561,13 @@ def model_evaluation(x_train, y_train, x_test, y_test, k, best_eta, best_eps):
     bayes_test_acc = np.mean(preds == y_test.reshape(-1, 1))
 
     plot_decision_regions(x_train, y_train, nb, title="Naive Bayes")
+
+    # 3. Plot the cost Vs the iteration number for the Logistic Regression model
+    plt.plot(lr.Js)
+    plt.title("Cost Vs Iteration Number for Logistic Regression")
+    plt.xlabel("Iteration Number")
+    plt.ylabel("Cost")
+    plt.show()
 
     return {'lor_train_acc': lor_train_acc,
             'lor_test_acc': lor_test_acc,
